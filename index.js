@@ -131,7 +131,12 @@ cron.schedule("0 * * * *", async () => {
   console.log("Running hourly tasks at" + JSON.stringify(new Date()));
 
   let startTime = new Date();
-  await callHourlyTasks();
+  const currentHour = startTime.getHours();
+  if (currentHour >= 9 && currentHour <= 22) {
+    await callHourlyTasks();
+  } else {
+    console.log("Not calling hourly tasks as time does not fall between 9am and 10pm.");
+  }
   let finishTime = new Date();
   let timeDifference = finishTime.getTime() - startTime.getTime();
 
