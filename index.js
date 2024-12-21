@@ -141,5 +141,17 @@ cron.schedule("0 * * * *", async () => {
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-  console.log("API scheduler initialized.");
+
+  (async () => {
+    try {
+      let startTime = new Date();
+      await callHourlyTasks();
+      let finishTime = new Date();
+      let timeDifference = finishTime.getTime() - startTime.getTime();
+
+      console.log("Hourly tasks completed in: " + timeDifference / 1000 + "s.");
+    } catch (error) {
+      console.error("Error executing hourly tasks:", error);
+    }
+  })();
 });
