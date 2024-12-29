@@ -6,6 +6,7 @@ const app = express();
 const PORT = 3000;
 
 const API_BASE_URL = "http://localhost:8081";
+const API_KEY = "8ea1fc8da4cf5801ab7af094ff145b1516a6aad3d622afbcde1e6df45c2208f1";
 
 app.use(express.json());
 
@@ -17,12 +18,12 @@ const generateGUID = () => {
   });
 };
 
-const createRequestConfig = (method, url) => ({
+const createRequestConfig = (method, url, apiKey) => ({
   method,
   url: `${API_BASE_URL}${url}`,
   headers: {
     "Content-Type": "application/json",
-    // Authorization: `Bearer ${getAuthToken()}`,
+    "x-killers-api-key-x": `${apiKey}`,
     "context-id": `${generateGUID()}`,
     "request-source": `Killers_Task`,
   },
@@ -30,10 +31,12 @@ const createRequestConfig = (method, url) => ({
 
 app.get("/trigger-all-tasks", async (req, res) => {
   try {
+    const apiKey = req.headers["x-killers-api-key-x"];
+
     console.log("GET /trigger-all-tasks");
 
     let startTime = new Date();
-    await callHourlyTasks();
+    await callHourlyTasks(apiKey, "season");
     let finishTime = new Date();
     let timeDifference = finishTime.getTime() - startTime.getTime();
 
@@ -44,11 +47,11 @@ app.get("/trigger-all-tasks", async (req, res) => {
   }
 });
 
-const callHourlyTasks = async () => {
+const callHourlyTasks = async (apiKey, updateFixtures) => {
   // /get-season-fixtures
   try {
     let startTime = new Date();
-    const fixtureResponse = await axios(createRequestConfig("GET", "/fixtures/tasks/get-season-fixtures"));
+    const fixtureResponse = await axios(createRequestConfig("GET", "/fixtures/tasks/get-season-fixtures", apiKey));
     let finishTime = new Date();
     let timeDifference = finishTime.getTime() - startTime.getTime();
 
@@ -63,7 +66,7 @@ const callHourlyTasks = async () => {
   // /update-deadlines
   try {
     let startTime = new Date();
-    const updateRoundDeadlineResponse = await axios(createRequestConfig("GET", "/rounds/tasks/update-deadlines"));
+    const updateRoundDeadlineResponse = await axios(createRequestConfig("GET", "/rounds/tasks/update-deadlines", apiKey));
     let finishTime = new Date();
     let timeDifference = finishTime.getTime() - startTime.getTime();
 
@@ -78,7 +81,7 @@ const callHourlyTasks = async () => {
   // /auto-populate-all-missing-user-choices
   try {
     let startTime = new Date();
-    const populateMissingChoicesResponse = await axios(createRequestConfig("GET", "/games/tasks/auto-populate-all-missing-user-choices"));
+    const populateMissingChoicesResponse = await axios(createRequestConfig("GET", "/games/tasks/auto-populate-all-missing-user-choices", apiKey));
     let finishTime = new Date();
     let timeDifference = finishTime.getTime() - startTime.getTime();
 
@@ -98,12 +101,19 @@ const callHourlyTasks = async () => {
   // /update-lives
   try {
     let startTime = new Date();
-    const updateUserLivesResponse = await axios(createRequestConfig("GET", "/games/tasks/update-lives"));
+    const updateUserLivesResponse = await axios(createRequestConfig("GET", "/games/tasks/update-lives?updateFixtures=" + updateFixtures, apiKey));
     let finishTime = new Date();
     let timeDifference = finishTime.getTime() - startTime.getTime();
 
     console.log(
-      "/update-lives: " + updateUserLivesResponse.status + " started at: " + JSON.stringify(startTime) + " ended at: " + JSON.stringify(finishTime),
+      "/update-lives?updateFixtures=" +
+        updateFixtures +
+        ": " +
+        updateUserLivesResponse.status +
+        " started at: " +
+        JSON.stringify(startTime) +
+        " ended at: " +
+        JSON.stringify(finishTime),
       " Total time: " + timeDifference + "ms"
     );
   } catch (error) {
@@ -113,7 +123,7 @@ const callHourlyTasks = async () => {
   // /select-game-winners
   try {
     let startTime = new Date();
-    const updateGameWinnersResponse = await axios(createRequestConfig("GET", "/games/tasks/select-game-winners"));
+    const updateGameWinnersResponse = await axios(createRequestConfig("GET", "/games/tasks/select-game-winners", apiKey));
     let finishTime = new Date();
     let timeDifference = finishTime.getTime() - startTime.getTime();
 
@@ -150,7 +160,7 @@ app.listen(PORT, () => {
   (async () => {
     try {
       let startTime = new Date();
-      await callHourlyTasks();
+      await callHourlyTasks("day", API_KEY);
       let finishTime = new Date();
       let timeDifference = finishTime.getTime() - startTime.getTime();
 
