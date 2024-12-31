@@ -78,6 +78,25 @@ const callHourlyTasks = async (apiKey, updateFixtures) => {
     console.error("Error calling /update-deadlines:", error.message);
   }
 
+  try {
+    let startTime = new Date();
+    const disableInvalidGamesResponse = await axios(createRequestConfig("GET", "/games/tasks/disable-invalid-games", apiKey));
+    let finishTime = new Date();
+    let timeDifference = finishTime.getTime() - startTime.getTime();
+
+    console.log(
+      "/disable-invalid-games: " +
+        disableInvalidGamesResponse.status +
+        " started at: " +
+        JSON.stringify(startTime) +
+        " ended at: " +
+        JSON.stringify(finishTime),
+      " Total time: " + timeDifference + "ms"
+    );
+  } catch (error) {
+    console.error("Error calling /disable-invalid-games:", error.message);
+  }
+
   // /auto-populate-all-missing-user-choices
   try {
     let startTime = new Date();
