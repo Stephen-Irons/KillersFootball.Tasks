@@ -6,7 +6,7 @@ const app = express();
 const PORT = 3000;
 
 const API_BASE_URL = "http://localhost:8081";
-const API_KEY = "8ea1fc8da4cf5801ab7af094ff145b1516a6aad3d622afbcde1e6df45c2208f1";
+const API_KEY = "e4e7429f03466153a314a5e82612d57b18f9778f70be38d5ff2bd58d619826c2";
 
 app.use(express.json());
 
@@ -48,6 +48,7 @@ app.get("/trigger-all-tasks", async (req, res) => {
 });
 
 const callHourlyTasks = async (apiKey, updateFixtures) => {
+  console.log("API KEY: " + apiKey);
   // /get-season-fixtures
   try {
     let startTime = new Date();
@@ -78,6 +79,7 @@ const callHourlyTasks = async (apiKey, updateFixtures) => {
     console.error("Error calling /update-deadlines:", error.message);
   }
 
+  // disable-invalid-games
   try {
     let startTime = new Date();
     const disableInvalidGamesResponse = await axios(createRequestConfig("GET", "/games/tasks/disable-invalid-games", apiKey));
@@ -162,7 +164,7 @@ cron.schedule("0 * * * *", async () => {
   let startTime = new Date();
   const currentHour = startTime.getHours();
   if (currentHour >= 9 && currentHour <= 22) {
-    await callHourlyTasks();
+    await callHourlyTasks(API_KEY, "day");
   } else {
     console.log("Not calling hourly tasks as time does not fall between 9am and 10pm.");
   }
@@ -179,7 +181,7 @@ app.listen(PORT, () => {
   (async () => {
     try {
       let startTime = new Date();
-      await callHourlyTasks("day", API_KEY);
+      await callHourlyTasks(API_KEY, "day");
       let finishTime = new Date();
       let timeDifference = finishTime.getTime() - startTime.getTime();
 
