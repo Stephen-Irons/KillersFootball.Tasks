@@ -48,7 +48,6 @@ app.get("/trigger-all-tasks", async (req, res) => {
 });
 
 const callHourlyTasks = async (apiKey, updateFixtures) => {
-  console.log("API KEY: " + apiKey);
   // /get-season-fixtures
   try {
     let startTime = new Date();
@@ -155,6 +154,26 @@ const callHourlyTasks = async (apiKey, updateFixtures) => {
   } catch (error) {
     console.error("Error calling /select-game-winners:", error.message);
   }
+
+  // /tasks/process-finished-games
+  try {
+    let startTime = new Date();
+    const updateGameWinnersResponse = await axios(createRequestConfig("GET", "/tasks/process-finished-games", apiKey));
+    let finishTime = new Date();
+    let timeDifference = finishTime.getTime() - startTime.getTime();
+
+    console.log(
+      "/tasks/process-finished-games: " +
+        updateGameWinnersResponse.status +
+        " started at: " +
+        JSON.stringify(startTime) +
+        " ended at: " +
+        JSON.stringify(finishTime),
+      " Total time: " + timeDifference + "ms"
+    );
+  } catch (error) {
+    console.error("Error calling /tasks/process-finished-games:", error.message);
+  }
 };
 
 // Schedule the job to run every hour
@@ -163,7 +182,7 @@ cron.schedule("0 * * * *", async () => {
 
   let startTime = new Date();
   const currentHour = startTime.getHours();
-  if (currentHour >= 9 && currentHour <= 22) {
+  if (currentHour >= 10 && currentHour < 23) {
     await callHourlyTasks(API_KEY, "day");
   } else {
     console.log("Not calling hourly tasks as time does not fall between 9am and 10pm.");
